@@ -1,0 +1,1 @@
+INSERT INTO platform (siteName) values ('youtube');
