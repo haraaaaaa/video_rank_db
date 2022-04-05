@@ -47,11 +47,13 @@ export function addVideos (videos:Video[]): Promise<void> {
     });
 };
 
-export function getRankings (date:string, platform:string): Promise<Map<string, number>> {
+export function getRankings (dateStr:string, platform:string): Promise<Map<string, number>> {
     return new Promise(function (resolve, reject) {
         logger.info('[ACCESS] getRankings');        
+        const date = new  Date(dateStr).toISOString().slice(0, 19).replace('T', ' ');
         const sqlRanking = 
-        `SELECT videoId, ranking FROM ranking WHERE DATE(rankedDate)=DATE("${date}") AND platform=${platform};`; 
+        `SELECT videoId, ranking FROM ranking WHERE rankedDate>=DATE_ADD("${date}", INTERVAL -1 HOUR) AND platform=${platform};`; 
+        console.log(sqlRanking);
         connection.query(sqlRanking,(error, rows) => {
             const rankingMap = new Map<string, number>();
             if (error) {
@@ -62,7 +64,7 @@ export function getRankings (date:string, platform:string): Promise<Map<string, 
             rawRankings.forEach(rawRanking => {
                 rankingMap.set(rawRanking.videoId, rawRanking.ranking); 
             });
-            logger.info('[SUCCESS] getRankings');
+            logger.info('[SUCCESS] getRankings : ' + rankingMap.size);
             resolve(rankingMap);
         });
     });
@@ -97,7 +99,7 @@ export function getVideos (rankingMap:Map<string, number>): Promise<Video[]> {
                }
                videos.push(video);
             });
-            logger.info('[SUCCESS] getVideos');
+            logger.info('[SUCCESS] getVideos : ' + videos.length);
             resolve(videos);
         });
     });
